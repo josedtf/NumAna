@@ -3,5 +3,5 @@ numpy
 simpy
 plotly
 pandas
-os
 kaleido
+tabulate
