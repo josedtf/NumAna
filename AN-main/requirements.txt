@@ -1,0 +1,7 @@
+django
+numpy
+simpy
+plotly
+pandas
+kaleido
+tabulate

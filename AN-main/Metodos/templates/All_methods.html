@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numerical methods</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Montserrat", sans-serif;
+            font-optical-sizing: auto;
+            background-color: #000000;
+            color: #ffffff;
+        }
+    
+        .navbar {
+            width: 100%;
+            background-color: #ffffff;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        .navbar h2 {
+            color: #00ffcc;
+            font-weight: 600;
+            margin: 10px;
+            text-align: center;
+            flex: 1 100%;
+        }
+    
+        .navbar a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #000000;
+            transition: background-color 0.3s, color 0.3s;
+            font-weight: 500;
+            margin: 5px;
+        }
+    
+        .navbar a:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+    
+        .content {
+            padding: 40px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+    
+        .form-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #000000;
+            border: 1px solid #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    
+        .form-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #0f81f4;
+        }
+    
+        .form-container input[type="text"],
+        .form-container input[type="radio"],
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #000000;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            font-family: "Montserrat", sans-serif;
+        }
+    
+        .form-container input[type="radio"] {
+            width: auto;
+            margin-right: 10px;
+        }
+    
+        .form-container button {
+            background-color: #00ff2f;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+    
+        .form-container label,
+        .form-container input[type="radio"] {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    
+        .form-container button:hover {
+            background-color: #ee0d0d;
+        }
+    
+        .hidden {
+            display: none;
+        }
+    </style>
+    
+    <body>
+        <div class="navbar">
+            <a href="#bisection" onclick="showForm('bisection')">Bisection</a>
+            <a href="#incremental_search" onclick="showForm('incremental-search')">Incremental Search</a>
+            <a href="#false-point" onclick="showForm('regla_falsa')">False position</a>
+            <a href="#fixed-point" onclick="showForm('punto_fijo')">Fixed point</a>
+            <a href="#newton" onclick="showForm('newton')">Newton</a>
+            <a href="#secant" onclick="showForm('secante')">Secant</a>
+            <a href="#multiple-roots" onclick="showForm('raices_multiples')">Multiple roots</a>
+            <a href="#gaussian_methods" onclick="showForm('gaussian_methods')">Gaussian</a>
+            <a href="#iterative-methods" onclick="showForm('metodos_iterativos')">Iterative</a>
+            <a href="#lu_methods" onclick="showForm('lu_methods')">LU</a>
+            <a href="#intepolation" onclick="showForm('interpolacion')">Interpolation</a>
+        </div>
+
+<div class="content">
+    <div id="bisection-form" class="form-container">
+        <h1 id="method-title">Bisection</h1>
+        <p>To ensure the accuracy and effectiveness of the secant method in calculating roots of functions, it is essential to meet the following conditions:<br><br>
+
+            "x0" must be less than "x1", since the bisection method works on a closed interval.<br><br>
+            "The interval must contain a root of the function, i.e. f(x0) * f(x1) < 0"<br><br>
+            
+            The function to be evaluated must be continuous on the specified interval and must comply with the following format. i.e. x**3 + 7*x**2 - 60<br><br>
+            Tolerance can be entered in decimal format i.e. 0.0001 or floating point i.e. 0.5e-5</p>
+        <form method="post" action="{% url 'bisection' %}">
+            {% csrf_token %}
+            <label for="xi_bs">X0 Value:</label>
+            <input type="text" id="xi_bs" name="xi">
+            <label for="xs_bs">X1 Value:</label>
+            <input type="text" id="xs_bs" name="xs">
+            <label for="tipo_error">Error type:</label>
+            <input type="radio" id="absoluto" name="tipo_error" value="absoluto">
+            <label for="absoluto">Absolut</label>
+            <input type="radio" id="relativo" name="tipo_error" value="relativo">
+            <label for="relativo">Relative</label>
+            <br>
+            <label for="tol_bs">Tolerance:</label>
+            <input type="text" id="tol_bs" name="tol">
+            <label for="niter_bs">Maximum number of iterations:</label>
+            <input type="text" id="niter_bs" name="niter">
+            <label for="funcion_bs">Function:</label>
+            <input type="text" id="funcion_bs" name="funcion">
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+
+    <div id="regla_falsa-form" class="form-container hidden">
+        <h1 id="method-title">False position</h1>
+        <p>To ensure the accuracy and effectiveness of the False Rule method in calculating roots of functions, it is essential to meet the following conditions::<br><br>
+            - The "Value of a" and "Value of b" must be numeric values ​​that define the initial interval where the root will be searched. The interval [a, b] must contain at least one root of the function.<br><br>
+            - The function to be evaluated must be continuous on the specified interval and must be entered in the appropriate format. Example: x**3 + 7*x**2 - 60.<br><br>
+            - The "Tolerance" must be entered in decimal format, such as 0.0001 or 0.5e-5, and represents the desired accuracy for the result.<br><br>
+            - The "Maximum number of iterations" must be a positive integer, which limits the number of iterations allowed.<br><br>
+            - Select the "Error Type" between absolute or relative to determine the convergence criterion.</p>
+        <form method="post" action="{% url 'regla_falsa' %}">
+            {% csrf_token %}
+            
+            <label for="a_rf">Value of a:</label>
+            <input type="text" id="a_rf" name="a"  required>
+            
+            
+            <label for="b_rf">Value of b:</label>
+            <input type="text" id="b_rf" name="b"  required>
+            
+            
+            <label for="tolerancia_rf">Tolerance:</label>
+            <input type="text" id="tolerancia_rf" name="tolerancia"  required>
+           
+            
+            <label for="iteraciones_rf">Maximum number of iterations:</label>
+            <input type="text" id="iteraciones_rf" name="iteraciones" required>
+            
+            
+            <label for="funcion_rf">Function:</label>
+            <input type="text" id="funcion_rf" name="funcion" required>
+            
+            
+            <label for="tipo_error">Error type:</label>
+            <br>
+            <input type="radio" id="absoluto" name="tipo_error" value="absoluto" required>
+            <label for="absoluto">Absolut</label>
+            <input type="radio" id="relativo" name="tipo_error" value="relativo" required>
+            <label for="relativo">Relative</label>
+            
+            <br>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+    
+    <div id="incremental-search-form" class="form-container">
+        <h1 id="method-title">Incremental Search</h1>
+        <p>The Incremental Search method works by evaluating a function iteratively over small intervals to locate a root. The following conditions must be met:<br><br>
+            - "x0" is the starting point of the search.<br>
+            - "Delta" is the step size used for incrementing x0.<br>
+            - The function must be continuous in the search interval.<br>
+            - Tolerance is not directly used but iterations are limited by the "Maximum number of iterations."
+        </p>
+        <form method="post" action="{% url 'incremental_search' %}">
+            {% csrf_token %}
+            <label for="x0">Starting Value (x0):</label>
+            <input type="text" id="x0" name="x0">
+            <label for="delta">Delta (Step Size):</label>
+            <input type="text" id="delta" name="delta">
+            <label for="niter">Maximum Number of Iterations:</label>
+            <input type="text" id="niter" name="niter">
+            <label for="funcion">Function:</label>
+            <input type="text" id="funcion" name="funcion">
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+    
+    
+    <div id="punto_fijo-form" class="form-container hidden">
+        <h1 id="method-title">Fixed point</h1>
+        <p>To ensure the accuracy and effectiveness of the Fixed Point method in calculating roots of functions, it is essential to meet the following conditions:<br><br>
+            - The "Start Point" must be a numerical value that will serve as a starting point for the method.<br><br>
+            - The function f(x) must be continuous and must be entered in the appropriate format. Example: x**3 + 7*x**2 - 60.<br><br>
+            - The function g(x) must be appropriately transformed from f(x) so that x = g(x) corresponds to the desired solution..<br><br>
+            - The "Tolerance" must be entered in decimal format, such as 0.0001 or 0.5e-5, and represents the desired accuracy for the result.<br><br>
+            - The "Maximum number of iterations" must be a positive integer, which limits the number of iterations allowed.<br><br>
+            - Select the "Error Type" between absolute or relative to determine the convergence criterion.</p>
+        <form method="post" action="{% url 'PuntoFijo' %}">
+            {% csrf_token %}
+            
+            <label for="punto_inicial">Start point:</label>
+            <input type="text" id="punto_inicial" name="vInicial" required>
+            
+            
+            <label for="ff">f(x):</label>
+            <input type="text" id="ff" name="funcion-F" required>
+            
+            
+            <label for="gg">g(x):</label>
+            <input type="text" id="gg" name="funcion-G" required>
+            
+            
+            <label for="tolerancia">Tolerance:</label>
+            <input type="text" id="tolerancia" name="tolerancia" required>
+            
+            
+            <label for="iteraciones">Maximum number of iterations:</label>
+            <input type="text" id="iteraciones" name="iteraciones" required>
+            
+            
+            <label for="tipo_error">Error type:</label>
+            <br>
+            <input type="radio" id="absoluto" name="tipo_error" value="absoluto" required>
+            <label for="absoluto">Absolute</label>
+            <input type="radio" id="relativo" name="tipo_error" value="relativo" required>
+            <label for="relativo">Relative</label>
+            
+            <br>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+    
+    
+
+    <div id="newton-form" class="form-container hidden">
+        <h1 id="method-title">Newton</h1>
+        <p>To ensure the accuracy and effectiveness of Newton's method, it is essential to meet the following conditions:<br/><br/>
+            "Start point" must be a numeric value that will serve as the starting point for the method.<br/><br/>
+            The function to be evaluated must be continuous and must comply with the following format. i.e. x**3 + 7*x**2 - 60<br/><br/>
+            The tolerance can be entered in decimal format i.e. 0.0001 or floating point i.e. 0.5e-5.<br/><br/>
+            The derivative of the function must be entered in the appropriate format. Example: 3*x**2 + 14*x<br/><br/>
+            The "Maximum number of iterations" must be a positive integer, which limits the number of iterations allowed.<br/><br/>
+            Select the "Error Type" between absolute or relative to determine the convergence criterion.
+        </p>
+        <form method="post" action="{% url 'Newton' %}">
+            {% csrf_token %}
+            
+            <label for="punto_inicial">Start point:</label>
+            <input type="text" id="punto_inicial" name="punto_inicial">
+            <label for="punto_inicial">Tolerance:</label>
+            <input type="text" id="punto_inicial" name="tolerancia">
+            <label for="punto_inicial">Maximum number of iterations:</label>
+            <input type="text" id="punto_inicial" name="iteraciones">
+            <label for="punto_inicial">Function:</label>
+            <input type="text" id="punto_inicial" name="funcion">
+            <br/>
+            <label for="punto_inicial">Derivative:</label>
+            <input type="text" id="punto_inicial" name="derivada">
+            <label for="tipo_error">Error type:</label>
+            <input type="radio" id="absoluto" name="tipo_error" value="absoluto">
+            <label for="absoluto">Absolute</label>
+            <input type="radio" id="relativo" name="tipo_error" value="relativo">
+            <label for="relativo">Relative</label>
+            <br/>
+            <a href="https://www.geogebra.org/calculator">Calculator to perform the derivative</a>
+            
+            <br><br>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+
+
+    <div id="secante-form" class="form-container hidden">
+        <h1 id="Secante">Secant</h1>
+        <p>To ensure the accuracy and effectiveness of the secant method in calculating roots of functions, it is essential to meet the following conditions:<br><br>
+            "X0" must be less than "X1", since the secant method works on a closed interval.<br><br>
+            
+            The function to be evaluated must be continuous on the specified interval and must comply with the following format. Exampl: x**3 + 7*x**2 - 60<br><br>
+            The tolerance can be entered in decimal format i.e. 0.0001 or floating point i.e. 0.5e-5.</p>
+        <form method="post" action="{% url 'secante' %}">
+        <form method="post" action="#">
+            {% csrf_token %}
+            
+            <label for="x0_sc">X0 Value:</label>
+            <input type="text" id="x0_sc" name="x0">
+            <label for="x1_sc">X1 Value:</label>
+            <input type="text" id="x1_sc" name="x1">
+
+            <label for="tipo_error">Error type:</label>
+            <input type="radio" id="absoluto" name="tipo_error" value="absoluto">
+            <label for="absoluto">Absolute</label>
+            <input type="radio" id="relativo" name="tipo_error" value="relativo">
+            <label for="relativo">Relative</label>
+            <br>
+            <label for="tol_sc">Tolerance:</label>
+            <input type="text" id="tol_sc" name="tol">
+            <label for="niter_sc">Maximum number of iterations:</label>
+            <input type="text" id="niter_sc" name="niter">
+            <label for="funcion_sc">Function:</label>
+            <input type="text" id="funcion_sc" name="funcion">
+            <button type="submit">Calculate</button> 
+        </form>
+    </div>
+
+    <div id="raices_multiples-form" class="form-container hidden">
+        <h1 id="method-title">Multiple roots</h1>
+        <p>To ensure the accuracy and effectiveness of the Multiple Roots method, it is essential to meet the following conditions:<br/><br/>
+            "Start point" must be a numeric value that will serve as the starting point for the method.<br/><br/>
+            The function to be evaluated must be continuous and must comply with the following format. Example: x**3 + 7*x**2 - 60<br/><br/>
+            The tolerance can be entered in decimal format i.e. 0.0001 or floating point i.e. 0.5e-5.<br/><br/>
+            The "Maximum number of iterations" must be a positive integer, which limits the number of iterations allowed.<br/><br/>
+            Select the "Error Type" between absolute or relative to determine the convergence criterion.
+        </p>
+        <form method="post" action="{% url 'RaicesMultiples' %}">
+            {% csrf_token %}
+            
+            <label for="punto_inicial">Function:</label>
+            <input type="text" id="punto_inicial" name="funcion">
+            <label for="punto_inicial">Start point:</label>
+            <input type="text" id="punto_inicial" name="punto_inicial">
+            <label for="punto_inicial">Tolerance:</label>
+            <input type="text" id="punto_inicial" name="tolerancia">
+            <label for="punto_inicial">Maximum number of iterations:</label>
+            <input type="text" id="punto_inicial" name="iteraciones">
+            <br/>
+            <input type="radio" id="absoluto" name="tipo_error" value="absoluto">
+            <label for="absoluto">Absolute</label>
+            <input type="radio" id="relativo" name="tipo_error" value="relativo">
+            <label for="relativo">Relative</label>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+
+    <div id="metodos_iterativos-form" class="form-container hidden">
+        <h1 id="method-title">Iterative methods</h1>
+        <p>To ensure the accuracy and effectiveness of the iterative method, it is essential to meet the following conditions::<br><br>
+            Fill in all fields and selectors.
+            The matrix must be invertible, that there are no 0's on its diagonal<br><br>
+
+            The tolerance can be entered in decimal format i.e. 0.0001 or floating point i.e. 0.5e-5.</p>
+        <form method="post" action="{% url 'iterativos' %}">
+            {% csrf_token %}
+            <label for="metodo_iterativo">Iterative method:</label>
+            <select id="metodo_iterativo" name="metodo_iterativo" onchange="ismethodsor(this.value)">
+                <option value="gauss_seidel">Gauss-Seidel</option>
+                <option value="jacobi">Jacobi</option>
+                <option value="sor">SOR</option>
+            </select>
+            <label for="tamaño_matriz">Matrix size (maximum 10):</label><input type="number" id="numero" name="numero" min="1" max="10" onchange="showMatrix(this.value)">
+            <br>
+            <label for="tol_sc">Tolerance:</label>
+            <input type="text" id="tol_sc" name="tol">
+            <label for="niter_sc">Maximum number of iterations:</label>
+            <input type="text" id="niter_sc" name="niter">
+            <br>
+            <div id="w_container" class="hidden">
+                <label for="w_sc">Value of W:</label>
+                <input type="text" id="w_sc" name="w">
+            </div>
+            <div id="matrix-container" class="hidden">
+                <h2>Matrix</h2>
+                <table id="matrix" name="matrix_name">
+                    <!-- Matrix entries will be dynamically added here -->
+                </table>
+            </div>
+            <table>
+                <tr>
+                    <td>
+                        <div id="vectorx-container" class="hidden">
+                            <h2>Initial vector (x0) |-|-| </h2>
+                            <table id="vectorx">
+                                <!-- Matrix entries will be dynamically added here -->
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <div id="vectorb-container" class="hidden">
+                            <h2>Vector (b)</h2>
+                            <table id="vectorb">
+                                <!-- Matrix entries will be dynamically added here -->
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit">Evaluate</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <div id="lu_methods-form" class="form-container hidden">
+        <h1 id="method-title">LU Decomposition Methods</h1>
+        <p>
+            To solve a system using LU decomposition, the matrix must be square and invertible.<br><br>
+            The matrix size and all elements must be entered. Select the method to apply.
+        </p>
+        <form method="post" action="{% url 'lu_methods' %}">
+            {% csrf_token %}
+            <label for="metodo_lu">LU Method:</label>
+            <select id="metodo_lu" name="metodo_lu">
+                <option value="lu_simple">LU Simple</option>
+                <option value="lu_pivoting">LU with Pivoting</option>
+            </select>
+            <label for="tamaño_matriz">Matrix size (maximum 10):</label><input type="number" id="numero" name="numero" min="1" max="10" onchange="showMatrix2(this.value)">
+            <br>
+            <div id="matrix-container2" class="hidden">
+                <h2>Matrix</h2>
+                <table id="matrix2" name="matrix_name">
+                    <!-- Matrix entries will be dynamically added here -->
+                </table>
+            </div>
+            <table>
+                <tr>
+                    <td>
+                        <div id="vectorb-container2" class="hidden">
+                            <h2>Vector (b)</h2>
+                            <table id="vectorb2">
+                                <!-- Matrix entries will be dynamically added here -->
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit">Evaluate</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>    
+
+    <div id="gaussian_methods-form" class="form-container hidden">
+        <h1 id="method-title">Gaussian Elimination Methods</h1>
+        <p>
+            To solve a system using Gaussian elimination, the matrix must be square and invertible.<br><br>
+            The matrix size and all elements must be entered. Select the method to apply.
+        </p>
+        <form method="post" action="{% url 'gaussian_methods' %}">
+            {% csrf_token %}
+            <label for="metodo_gaussiano">Gaussian Method:</label>
+            <select id="metodo_gaussiano" name="metodo_gaussiano">
+                <option value="gaussian_simple">Simple Gaussian Elimination</option>
+                <option value="gaussian_partial">Gaussian Elimination with Partial Pivoting</option>
+                <option value="gaussian_total">Gaussian Elimination with Total Pivoting</option>
+            </select>
+            <label for="tamaño_matriz">Matrix size (maximum 10):</label>
+            <input type="number" id="numero" name="numero" min="1" max="10" onchange="showMatrix3(this.value)">
+            <br>
+            <div id="matrix-container3" class="hidden">
+                <h2>Matrix (A)</h2>
+                <table id="matrix3" name="matrix_name">
+                    <!-- Matrix entries will be dynamically added here -->
+                </table>
+            </div>
+            <table>
+                <tr>
+                    <td>
+                        <div id="vectorb-container3" class="hidden">
+                            <h2>Vector (b)</h2>
+                            <table id="vectorb3">
+                                <!-- Vector entries will be dynamically added here -->
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit">Evaluate</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    
+
+    <div id="interpolacion-form" class="form-container hidden">
+        <h1 id="method-title">Interpolation</h1>
+        <p>Choose which method you want to use:<br><br>
+
+            "You can add and remove columns as you wish.<br><br>
+            "The X's must be arranged from smallest to largest"<br><br>
+            "There should not be two X's with the same value"<br><br>
+            "Do not leave empty spaces, if you do not use a column, delete it"<br><br>
+
+        <form method="post" action="{% url 'interpolacion' %}">
+            {% csrf_token %}
+            <label for="metodo_interpolacion">Interpolation method:</label>
+            <select id="metodo_interpolacion" name="metodo_interpolacion">
+                <option value="vandermonde">Vandermonde</option>
+                <option value="lagrange">Lagrange</option>
+                <option value="newton">Newton</option>
+                <option value="splinel">Linear Spline</option>
+                <option value="splinec">Cuadratic Spline</option>
+                <option value="splinecu">Cubic Spline</option>
+            </select>
+            <br>
+            <table id="data-table" border="1">
+                <tr>
+                    <td>X</td>
+                    <td><input type="text" name="x[]" /></td>
+                </tr>
+                <tr>
+                    <td>Y</td>
+                    <td><input type="text" name="y[]" /></td>
+                </tr>
+            </table>
+            <button type="button" onclick="addColumn()">Add column</button>
+            <button type="button" onclick="removeColumn()">Delete column</button>
+            <br>
+            <button type="submit">Evaluate</button>
+        </form>
+    </div>
+</div>
+<script>
+    function ismethodsor(method){
+        if(method == "sor"){
+            document.getElementById("w_container").classList.remove("hidden");
+            }else{
+                document.getElementById("w_container").classList.add("hidden");
+                }
+    }
+</script>
+<script>
+    function showForm(method) {
+        document.querySelectorAll('.form-container').forEach(function(form) {
+            form.classList.add('hidden');
+        });
+        document.getElementById(method + '-form').classList.remove('hidden');
+        document.getElementById('method-title').innerText = method.replace('_', ' ').charAt(0).toUpperCase() + method.replace('_', ' ').slice(1);
+
+    }
+</script>
+<script>
+    function showMatrix(size) {
+        var matrixContainer = document.getElementById("matrix-container");
+        var matrixTable = document.getElementById("matrix");
+        matrixTable.innerHTML = ""; // Clear previous matrix
+
+        for (var i = 0; i < size; i++) {
+            var row = matrixTable.insertRow();
+            for (var j = 0; j < size; j++) {
+                var cell = row.insertCell();
+                cell.innerHTML = `<input type='number' step="any" min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
+            }
+        }
+        matrixContainer.classList.remove("hidden");
+
+        var vectorxContainer=document.getElementById("vectorx-container");
+        var vectorxTable=document.getElementById("vectorx");
+        vectorxTable.innerHTML="";
+        for (var i = 0; i < size; i++) {
+            var row = vectorxTable.insertRow();
+            var cell = row.insertCell();
+            cell.innerHTML = `<input type='number'step="any" min='-999' max='999' name='vx_cell_${i}'>`;
+        }
+        vectorxContainer.style.display="block";
+
+        var vectorbContainer=document.getElementById("vectorb-container");
+        var vectorbTable=document.getElementById("vectorb");
+        vectorbTable.innerHTML="";
+        for (var i = 0; i < size; i++) {
+            var row = vectorbTable.insertRow();
+            var cell = row.insertCell();
+            cell.innerHTML = `<input type='number' min='-999' max='999' name='vb_cell_${i}'>`;
+        }
+        vectorbContainer.style.display="block";
+    }
+</script>
+<script>
+    function showMatrix2(size) {
+        var matrixContainer = document.getElementById("matrix-container2");
+        var matrixTable = document.getElementById("matrix2");
+        matrixTable.innerHTML = ""; // Clear previous matrix
+
+        for (var i = 0; i < size; i++) {
+            var row = matrixTable.insertRow();
+            for (var j = 0; j < size; j++) {
+                var cell = row.insertCell();
+                cell.innerHTML = `<input type='number' step="any" min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
+            }
+        }
+        matrixContainer.classList.remove("hidden");
+
+        var vectorbContainer=document.getElementById("vectorb-container2");
+        var vectorbTable=document.getElementById("vectorb2");
+        vectorbTable.innerHTML="";
+        for (var i = 0; i < size; i++) {
+            var row = vectorbTable.insertRow();
+            var cell = row.insertCell();
+            cell.innerHTML = `<input type='number' min='-999' max='999' name='vb_cell_${i}'>`;
+        }
+        vectorbContainer.style.display="block";
+    }
+</script>
+<script>
+    function showMatrix3(size) {
+        var matrixContainer = document.getElementById("matrix-container3");
+        var matrixTable = document.getElementById("matrix3");
+        matrixTable.innerHTML = ""; // Clear previous matrix
+
+        for (var i = 0; i < size; i++) {
+            var row = matrixTable.insertRow();
+            for (var j = 0; j < size; j++) {
+                var cell = row.insertCell();
+                cell.innerHTML = `<input type='number' step="any" min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
+            }
+        }
+        matrixContainer.classList.remove("hidden");
+
+        var vectorbContainer=document.getElementById("vectorb-container3");
+        var vectorbTable=document.getElementById("vectorb3");
+        vectorbTable.innerHTML="";
+        for (var i = 0; i < size; i++) {
+            var row = vectorbTable.insertRow();
+            var cell = row.insertCell();
+            cell.innerHTML = `<input type='number' min='-999' max='999' name='vb_cell_${i}'>`;
+        }
+        vectorbContainer.style.display="block";
+    }
+</script>
+<script>
+    function addColumn() {
+        var table = document.getElementById("data-table");
+        var rowCount = table.rows.length;
+        for (var i = 0; i < rowCount; i++) {
+            var row = table.rows[i];
+            var cell = row.insertCell(-1);
+            cell.innerHTML = '<input type="text" name="' + (i == 0 ? 'x[]' : 'y[]') + '" />';
+        }
+    }
+
+    function removeColumn() {
+        var table = document.getElementById("data-table");
+        var rowCount = table.rows.length;
+        if (table.rows[0].cells.length > 2) {
+            for (var i = 0; i < rowCount; i++) {
+                var row = table.rows[i];
+                row.deleteCell(-1);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
