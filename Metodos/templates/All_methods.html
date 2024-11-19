@@ -120,12 +120,15 @@
     <body>
         <div class="navbar">
             <a href="#bisection" onclick="showForm('bisection')">Bisection</a>
+            <a href="#incremental_search" onclick="showForm('incremental-search')">Incremental Search</a>
             <a href="#false-point" onclick="showForm('regla_falsa')">False position</a>
             <a href="#fixed-point" onclick="showForm('punto_fijo')">Fixed point</a>
             <a href="#newton" onclick="showForm('newton')">Newton</a>
             <a href="#secant" onclick="showForm('secante')">Secant</a>
             <a href="#multiple-roots" onclick="showForm('raices_multiples')">Multiple roots</a>
-            <a href="#iterative-methods" onclick="showForm('metodos_iterativos')">Iterative methods</a>
+            <a href="#gaussian_methods" onclick="showForm('gaussian_methods')">Gaussian</a>
+            <a href="#iterative-methods" onclick="showForm('metodos_iterativos')">Iterative</a>
+            <a href="#lu_methods" onclick="showForm('lu_methods')">LU</a>
             <a href="#intepolation" onclick="showForm('interpolacion')">Interpolation</a>
         </div>
 
@@ -200,6 +203,28 @@
             <label for="relativo">Relative</label>
             
             <br>
+            <button type="submit">Calculate</button>
+        </form>
+    </div>
+    
+    <div id="incremental-search-form" class="form-container">
+        <h1 id="method-title">Incremental Search</h1>
+        <p>The Incremental Search method works by evaluating a function iteratively over small intervals to locate a root. The following conditions must be met:<br><br>
+            - "x0" is the starting point of the search.<br>
+            - "Delta" is the step size used for incrementing x0.<br>
+            - The function must be continuous in the search interval.<br>
+            - Tolerance is not directly used but iterations are limited by the "Maximum number of iterations."
+        </p>
+        <form method="post" action="{% url 'incremental_search' %}">
+            {% csrf_token %}
+            <label for="x0">Starting Value (x0):</label>
+            <input type="text" id="x0" name="x0">
+            <label for="delta">Delta (Step Size):</label>
+            <input type="text" id="delta" name="delta">
+            <label for="niter">Maximum Number of Iterations:</label>
+            <input type="text" id="niter" name="niter">
+            <label for="funcion">Function:</label>
+            <input type="text" id="funcion" name="funcion">
             <button type="submit">Calculate</button>
         </form>
     </div>
@@ -408,6 +433,87 @@
         </form>
     </div>
 
+    <div id="lu_methods-form" class="form-container hidden">
+        <h1 id="method-title">LU Decomposition Methods</h1>
+        <p>
+            To solve a system using LU decomposition, the matrix must be square and invertible.<br><br>
+            The matrix size and all elements must be entered. Select the method to apply.
+        </p>
+        <form method="post" action="{% url 'lu_methods' %}">
+            {% csrf_token %}
+            <label for="metodo_lu">LU Method:</label>
+            <select id="metodo_lu" name="metodo_lu">
+                <option value="lu_simple">LU Simple</option>
+                <option value="lu_pivoting">LU with Pivoting</option>
+            </select>
+            <label for="tamaño_matriz">Matrix size (maximum 10):</label><input type="number" id="numero" name="numero" min="1" max="10" onchange="showMatrix2(this.value)">
+            <br>
+            <div id="matrix-container2" class="hidden">
+                <h2>Matrix</h2>
+                <table id="matrix2" name="matrix_name">
+                    <!-- Matrix entries will be dynamically added here -->
+                </table>
+            </div>
+            <table>
+                <tr>
+                    <td>
+                        <div id="vectorb-container2" class="hidden">
+                            <h2>Vector (b)</h2>
+                            <table id="vectorb2">
+                                <!-- Matrix entries will be dynamically added here -->
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit">Evaluate</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>    
+
+    <div id="gaussian_methods-form" class="form-container hidden">
+        <h1 id="method-title">Gaussian Elimination Methods</h1>
+        <p>
+            To solve a system using Gaussian elimination, the matrix must be square and invertible.<br><br>
+            The matrix size and all elements must be entered. Select the method to apply.
+        </p>
+        <form method="post" action="{% url 'gaussian_methods' %}">
+            {% csrf_token %}
+            <label for="metodo_gaussiano">Gaussian Method:</label>
+            <select id="metodo_gaussiano" name="metodo_gaussiano">
+                <option value="gaussian_simple">Simple Gaussian Elimination</option>
+                <option value="gaussian_partial">Gaussian Elimination with Partial Pivoting</option>
+                <option value="gaussian_total">Gaussian Elimination with Total Pivoting</option>
+            </select>
+            <label for="tamaño_matriz">Matrix size (maximum 10):</label>
+            <input type="number" id="numero" name="numero" min="1" max="10" onchange="showMatrix3(this.value)">
+            <br>
+            <div id="matrix-container3" class="hidden">
+                <h2>Matrix (A)</h2>
+                <table id="matrix3" name="matrix_name">
+                    <!-- Matrix entries will be dynamically added here -->
+                </table>
+            </div>
+            <table>
+                <tr>
+                    <td>
+                        <div id="vectorb-container3" class="hidden">
+                            <h2>Vector (b)</h2>
+                            <table id="vectorb3">
+                                <!-- Vector entries will be dynamically added here -->
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit">Evaluate</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    
+
     <div id="interpolacion-form" class="form-container hidden">
         <h1 id="method-title">Interpolation</h1>
         <p>Choose which method you want to use:<br><br>
@@ -425,6 +531,7 @@
                 <option value="lagrange">Lagrange</option>
                 <option value="newton">Newton</option>
                 <option value="splinel">Linear Spline</option>
+                <option value="splinec">Cuadratic Spline</option>
                 <option value="splinecu">Cubic Spline</option>
             </select>
             <br>
@@ -474,7 +581,7 @@
             var row = matrixTable.insertRow();
             for (var j = 0; j < size; j++) {
                 var cell = row.insertCell();
-                cell.innerHTML = `<input type='number' min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
+                cell.innerHTML = `<input type='number' step="any" min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
             }
         }
         matrixContainer.classList.remove("hidden");
@@ -491,6 +598,58 @@
 
         var vectorbContainer=document.getElementById("vectorb-container");
         var vectorbTable=document.getElementById("vectorb");
+        vectorbTable.innerHTML="";
+        for (var i = 0; i < size; i++) {
+            var row = vectorbTable.insertRow();
+            var cell = row.insertCell();
+            cell.innerHTML = `<input type='number' min='-999' max='999' name='vb_cell_${i}'>`;
+        }
+        vectorbContainer.style.display="block";
+    }
+</script>
+<script>
+    function showMatrix2(size) {
+        var matrixContainer = document.getElementById("matrix-container2");
+        var matrixTable = document.getElementById("matrix2");
+        matrixTable.innerHTML = ""; // Clear previous matrix
+
+        for (var i = 0; i < size; i++) {
+            var row = matrixTable.insertRow();
+            for (var j = 0; j < size; j++) {
+                var cell = row.insertCell();
+                cell.innerHTML = `<input type='number' step="any" min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
+            }
+        }
+        matrixContainer.classList.remove("hidden");
+
+        var vectorbContainer=document.getElementById("vectorb-container2");
+        var vectorbTable=document.getElementById("vectorb2");
+        vectorbTable.innerHTML="";
+        for (var i = 0; i < size; i++) {
+            var row = vectorbTable.insertRow();
+            var cell = row.insertCell();
+            cell.innerHTML = `<input type='number' min='-999' max='999' name='vb_cell_${i}'>`;
+        }
+        vectorbContainer.style.display="block";
+    }
+</script>
+<script>
+    function showMatrix3(size) {
+        var matrixContainer = document.getElementById("matrix-container3");
+        var matrixTable = document.getElementById("matrix3");
+        matrixTable.innerHTML = ""; // Clear previous matrix
+
+        for (var i = 0; i < size; i++) {
+            var row = matrixTable.insertRow();
+            for (var j = 0; j < size; j++) {
+                var cell = row.insertCell();
+                cell.innerHTML = `<input type='number' step="any" min='-999' max='999' name='matrix_cell_${i}_${j}'>`;
+            }
+        }
+        matrixContainer.classList.remove("hidden");
+
+        var vectorbContainer=document.getElementById("vectorb-container3");
+        var vectorbTable=document.getElementById("vectorb3");
         vectorbTable.innerHTML="";
         for (var i = 0; i < size; i++) {
             var row = vectorbTable.insertRow();

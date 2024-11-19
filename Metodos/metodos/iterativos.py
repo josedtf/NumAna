@@ -126,3 +126,106 @@ def metodo_sor(A,x0,b,Tol,niter,w):
     return respuesta
 
 
+def eliminacion_gaussiana_simple(A, b):
+    """
+    Realiza la eliminación gaussiana simple para resolver el sistema de ecuaciones Ax = b.
+    """
+    n = len(A)
+    A = A.astype(float)
+    b = b.astype(float)
+    respuesta = {'solucion': False}
+    for i in range(n - 1):
+        if A[i, i] == 0:
+            mensaje = "No es posible continuar, elemento diagonal nulo."
+            respuesta['mensaje'] = mensaje
+            return respuesta
+        for j in range(i + 1, n):
+            m = A[j, i] / A[i, i]
+            A[j, i:] = A[j, i:] - m * A[i, i:]
+            b[j] = b[j] - m * b[i]
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = (b[i] - np.dot(A[i, i + 1:], x[i + 1:])) / A[i, i]
+    respuesta['solucion'] = True
+    respuesta['mensaje'] = "El sistema fue resuelto exitosamente con eliminación gaussiana simple."
+    respuesta['x'] = x
+    respuesta['A_final'] = pd.DataFrame(A)
+    respuesta['b_final'] = pd.DataFrame(b, columns=['b'])
+    return respuesta
+
+
+def eliminacion_gaussiana_pivoteo_parcial(A, b):
+    """
+    Realiza la eliminación gaussiana con pivoteo parcial para resolver el sistema de ecuaciones Ax = b.
+    """
+    n = len(A)
+    A = A.astype(float)
+    b = b.astype(float)
+    respuesta = {'solucion': False}
+    for i in range(n - 1):
+        # Pivoteo parcial
+        max_index = np.argmax(np.abs(A[i:, i])) + i
+        if A[max_index, i] == 0:
+            mensaje = "No es posible continuar, matriz singular detectada."
+            respuesta['mensaje'] = mensaje
+            return respuesta
+        if max_index != i:
+            # Intercambiar filas
+            A[[i, max_index]] = A[[max_index, i]]
+            b[[i, max_index]] = b[[max_index, i]]
+        for j in range(i + 1, n):
+            m = A[j, i] / A[i, i]
+            A[j, i:] = A[j, i:] - m * A[i, i:]
+            b[j] = b[j] - m * b[i]
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = (b[i] - np.dot(A[i, i + 1:], x[i + 1:])) / A[i, i]
+    respuesta['solucion'] = True
+    respuesta['mensaje'] = "El sistema fue resuelto exitosamente con pivoteo parcial."
+    respuesta['x'] = x
+    respuesta['A_final'] = pd.DataFrame(A)
+    respuesta['b_final'] = pd.DataFrame(b, columns=['b'])
+    return respuesta
+
+
+def eliminacion_gaussiana_pivoteo_total(A, b):
+    """
+    Realiza la eliminación gaussiana con pivoteo total para resolver el sistema de ecuaciones Ax = b.
+    """
+    n = len(A)
+    A = A.astype(float)
+    b = b.astype(float)
+    indices = np.arange(n)
+    respuesta = {'solucion': False}
+    for i in range(n - 1):
+        # Pivoteo total
+        max_index = np.unravel_index(np.argmax(np.abs(A[i:, i:])), A[i:, i:].shape)
+        max_index = (max_index[0] + i, max_index[1] + i)
+        if A[max_index] == 0:
+            mensaje = "No es posible continuar, matriz singular detectada."
+            respuesta['mensaje'] = mensaje
+            return respuesta
+        if max_index[0] != i:
+            # Intercambiar filas
+            A[[i, max_index[0]]] = A[[max_index[0], i]]
+            b[[i, max_index[0]]] = b[[max_index[0], i]]
+        if max_index[1] != i:
+            # Intercambiar columnas
+            A[:, [i, max_index[1]]] = A[:, [max_index[1], i]]
+            indices[[i, max_index[1]]] = indices[[max_index[1], i]]
+        for j in range(i + 1, n):
+            m = A[j, i] / A[i, i]
+            A[j, i:] = A[j, i:] - m * A[i, i:]
+            b[j] = b[j] - m * b[i]
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = (b[i] - np.dot(A[i, i + 1:], x[i + 1:])) / A[i, i]
+    # Reorganizar las soluciones según los cambios de columnas
+    x_final = np.zeros_like(x)
+    x_final[indices] = x
+    respuesta['solucion'] = True
+    respuesta['mensaje'] = "El sistema fue resuelto exitosamente con pivoteo total."
+    respuesta['x'] = x_final
+    respuesta['A_final'] = pd.DataFrame(A)
+    respuesta['b_final'] = pd.DataFrame(b, columns=['b'])
+    return respuesta

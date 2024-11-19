@@ -6,6 +6,8 @@ from sympy import *
 from django.utils.safestring import mark_safe
 import plotly.graph_objects as go
 from .metodos.iterativos import metodo_gauss_seidel,metodo_jacobi,metodo_sor
+from .metodos.lu_methods import metodo_lu_simple,metodo_lu_pivoting
+from .metodos.gaussian import eliminacion_gaussiana_simple, eliminacion_gaussiana_pivoteo_parcial, eliminacion_gaussiana_pivoteo_total
 from .utiles.saver import dataframe_to_txt,plot_to_png,text_to_txt
 from .utiles.plotter import plot_fx_puntos,fx_plot,spline_plot
 
@@ -815,16 +817,16 @@ def iterativos(request):
                 j=0
                 for j in range(tamaño):
                     val = request.POST.get(f'matrix_cell_{i}_{j}')
-                    row.append(int(val) if val else 0)
+                    row.append(float(val) if val else 0)
                 matriz.append(row)
             vectorx=[]
             for i in range(tamaño):
                 val = request.POST.get(f'vx_cell_{i}')
-                vectorx.append(int(val) if val else 0)
+                vectorx.append(float(val) if val else 0)
             vectorb=[]
             for i in range(tamaño):
                 val = request.POST.get(f'vb_cell_{i}')
-                vectorb.append(int(val) if val else 0)
+                vectorb.append(float(val) if val else 0)
             nmatriz=np.array(matriz)
             nvectorx = np.array(vectorx).reshape(-1, 1)
             nvectorb = np.array(vectorb).reshape(-1, 1)
@@ -1151,6 +1153,83 @@ def interpolacion(request):
                 dataframe_to_txt(coef_df, 'Spline_coef')
                 dataframe_to_txt(func_df, 'Spline_func')
                 plot_to_png(fig, f'Spline_Lineal_graph')
+
+            elif metodo_interpolacion == "splinec":
+                x = xi
+                y = fi
+                A = np.zeros((3 * (n - 1), 3 * (n - 1)))
+                b = np.zeros(3 * (n - 1))
+                c = 0
+                h = 0
+                d = 2  # Máximo grado del spline cuadrático
+
+                # Condición 1: Pasa por los puntos iniciales y finales de cada tramo
+                for i in range(n - 1):
+                    A[h, c] = x[i]**2
+                    A[h, c + 1] = x[i]
+                    A[h, c + 2] = 1
+                    b[h] = y[i]
+                    h += 1
+
+                    A[h, c] = x[i + 1]**2
+                    A[h, c + 1] = x[i + 1]
+                    A[h, c + 2] = 1
+                    b[h] = y[i + 1]
+                    h += 1
+
+                    c += 3
+
+                # Condición 2: Derivadas continuas en los puntos internos
+                c = 0
+                for i in range(1, n - 1):
+                    A[h, c] = 2 * x[i]
+                    A[h, c + 1] = 1
+                    A[h, c + 3] = -2 * x[i]
+                    A[h, c + 4] = -1
+                    b[h] = 0
+                    h += 1
+                    c += 3
+
+                # Resolución del sistema
+                val = np.linalg.inv(A).dot(b)
+                Tabla = val.reshape((n - 1, d + 1))
+
+                # Construcción de las funciones del spline
+                fxs = []
+                for i in range(n - 1):
+                    fx = ""
+                    for j in range(3):  # Solo hay tres coeficientes por tramo
+                        fx += str(Tabla[i, j])
+                        if j < 2:
+                            fx += "*x"
+                            if j == 0:
+                                fx += "**2"
+                        if j < 2 and Tabla[i, j + 1] >= 0:
+                            fx += "+"
+                    fxs.append(fx)
+
+                # Creación de la tabla de funciones y su representación HTML
+                tabla_df = pd.DataFrame(fxs)
+                tabla_html = tabla_df.to_html(classes='table table-striped', index=False)
+
+                # Generación de la gráfica utilizando `spline_plot`
+                fig = spline_plot(fxs, xi, fi)
+                plot_html = fig.to_html(full_html=False, default_height=500, default_width=1200)
+
+                # Creación del contexto para el spline cuadrático
+                coeficientes = pd.DataFrame(A)
+                context = {
+                    'df': tabla_html,
+                    'coef': coeficientes.to_html(classes='table table-striped', index=False),
+                    'spline': True,
+                    'plot_html': plot_html
+                }
+
+                # Exportación de los resultados
+                dataframe_to_txt(coeficientes, "spline_cuadratico_coef")
+                dataframe_to_txt(tabla_df, "spline_cuadratico_funciones")
+                plot_to_png(fig, "spline_cuadratico_grafica")
+
             elif metodo_interpolacion=="splinecu":
                 x=xi
                 y=fi
@@ -1246,3 +1325,150 @@ def interpolacion(request):
             return render(request, 'error.html', context)
 
     return render(request, 'one_method.html', context)
+
+def incremental_search(request):
+    if request.method == 'POST':
+        mensaje = ""
+        x0 = request.POST.get('x0')
+        delta = request.POST.get('delta')
+        niter = request.POST.get('niter')
+        funcion = request.POST.get('funcion')
+        if not x0 or not delta or not niter or not funcion:
+            x0 = 0
+            delta = 0.1
+            niter = 100
+            funcion = 'x**2 - 3'
+            mensaje += "Default values were used. Please enter all required fields. <br>"
+        else:
+            x0 = float(x0)
+            delta = float(delta)
+            niter = int(niter)
+
+        hay_solucion = False
+        solucion = 0
+        fsolucion = 0
+        try:
+            x = sp.symbols('x')
+            funcion_expr = parse_expr(funcion, local_dict={'x': x})
+            fx = lambda v: funcion_expr.subs(x, v).evalf()
+            tabla = []
+            x1 = x0
+            fx0 = fx(x0)
+            itera = 0
+
+            if fx0 == 0:
+                mensaje += f"The solution is: {x0}"
+                hay_solucion = True
+                solucion = x0
+                fsolucion = fx0
+            else:
+                while itera < niter:
+                    x1 = x0 + delta
+                    fx1 = fx(x1)
+                    tabla.append([itera + 1, x0, x1, fx0, fx1])
+
+                    if fx1 == 0:
+                        mensaje += f"The solution is: {x1}"
+                        hay_solucion = True
+                        solucion = x1
+                        fsolucion = fx1
+                        break
+                    elif fx0 * fx1 < 0:
+                        mensaje += f"A root exists between {x0} and {x1}."
+                        hay_solucion = True
+                        break
+
+                    x0 = x1
+                    fx0 = fx1
+                    itera += 1
+
+                if not hay_solucion:
+                    mensaje += "No root found in the specified interval."
+
+            columnas = ['Iteration', 'x0', 'x1', 'f(x0)', 'f(x1)']
+            df = pd.DataFrame(tabla, columns=columnas)
+            df.index = np.arange(1, len(df) + 1)
+
+            fig = fx_plot(funcion, x0, x1)
+            plot_html = fig.to_html(full_html=False, default_height=500, default_width=700)
+            dataframe_to_txt(df, "incremental_search")
+            plot_to_png(fig, "incremental_search")
+            context = {'df': df.to_html(), 'plot_html': plot_html}
+            mensaje = mark_safe(mensaje)
+            context['mensaje'] = mensaje
+            context['nombre_metodo'] = "Incremental Search"
+            return render(request, 'one_method.html', context)
+        except:
+            mensaje += "Error in the data entered. Please verify that the inputs are correct."
+            context = {'mensaje': mensaje}
+            return render(request, 'one_method.html', context)
+
+def lu_methods(request):
+    if request.method == 'POST':
+        try:
+            # Extract matrix size and inputs
+            tamaño = int(request.POST['numero'])
+            matriz = []
+            for i in range(tamaño):
+                row = []
+                for j in range(tamaño):
+                    val = request.POST.get(f'matrix_cell_{i}_{j}')
+                    row.append(float(val) if val else 0)
+                matriz.append(row)
+
+            vectorb = []
+            for i in range(tamaño):
+                val = request.POST.get(f'vb_cell_{i}')
+                vectorb.append(float(val) if val else 0)
+
+            A = np.array(matriz)
+            b = np.array(vectorb)
+
+            # Determine the LU method
+            metodo = request.POST['metodo_lu']
+            if metodo == "lu_simple":
+                resultado = metodo_lu_simple(A, b)
+                resultado['nombre_metodo'] = "LU Simple"
+            elif metodo == "lu_pivoting":
+                resultado = metodo_lu_pivoting(A, b)
+                resultado['nombre_metodo'] = "LU with Pivoting"
+
+            return render(request, 'lu_methods.html', resultado)
+        except Exception as e:
+            return render(request, 'lu_methods.html', {'mensaje': f"Error: {str(e)}", 'nombre_metodo': 'LU Methods'})
+        
+def gaussian_elimination_methods(request):
+    if request.method == 'POST':
+        try:
+            tamaño = int(request.POST['numero'])
+            matriz = []
+            for i in range(tamaño):
+                row = []
+                for j in range(tamaño):
+                    val = request.POST.get(f'matrix_cell_{i}_{j}')
+                    row.append(float(val) if val else 0)
+                matriz.append(row)
+
+            vectorb = []
+            for i in range(tamaño):
+                val = request.POST.get(f'vb_cell_{i}')
+                vectorb.append(float(val) if val else 0)
+
+            A = np.array(matriz)
+            b = np.array(vectorb)
+
+            metodo = request.POST['metodo_gaussiano']
+            if metodo == "gaussian_simple":
+                resultado = eliminacion_gaussiana_simple(A, b)
+                resultado['nombre_metodo'] = "Gaussian Elimination (Simple)"
+            elif metodo == "gaussian_partial":
+                resultado = eliminacion_gaussiana_pivoteo_parcial(A, b)
+                resultado['nombre_metodo'] = "Gaussian Elimination (Partial Pivoting)"
+            elif metodo == "gaussian_total":
+                resultado = eliminacion_gaussiana_pivoteo_total(A, b)
+                resultado['nombre_metodo'] = "Gaussian Elimination (Total Pivoting)"
+
+            return render(request, 'gaussian_methods.html', resultado)
+        except Exception as e:
+            return render(request, 'gaussian_methods.html', {'mensaje': f"Error: {str(e)}", 'nombre_metodo': 'Gaussian Elimination'})
+

@@ -11,5 +11,8 @@ urlpatterns = [
     path('RaicesMultiples/', views.raicesMultiplesView, name='RaicesMultiples'),
     path('iterativos/',views.iterativos,name="iterativos"),
     path('Interpolacion/',views.interpolacion,name="interpolacion"),
+    path('lu_methods/', views.lu_methods, name='lu_methods'),
+    path('incremental_search/', views.incremental_search,name='incremental_search'),
+    path('gaussian_methods/', views.gaussian_elimination_methods, name='gaussian_methods'),
 
 ]

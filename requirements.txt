@@ -4,3 +4,4 @@ simpy
 plotly
 pandas
 os
+kaleido
